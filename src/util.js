@@ -1,5 +1,6 @@
 const increment = x => x + 1;
 const decrement = x => x - 1;
+const noop = () => {};
 const getInitials = fullName => {
   const words = fullName.split(" ").filter(word => word.length > 0);
   switch (words.length) {
@@ -12,4 +13,13 @@ const getInitials = fullName => {
   }
 };
 
-export {decrement, getInitials, increment};
+const scoreboard = n => {
+  const results = {};
+  for (let i = 1; i <= n; i++) {
+    results[i] = 0;
+  }
+  results[n + 1 + "+"] = 0;
+  return results;
+};
+
+export {decrement, getInitials, increment, noop, scoreboard};
