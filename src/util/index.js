@@ -12,14 +12,13 @@ const getInitials = fullName => {
       return words[0][0] + words[words.length - 1][0];
   }
 };
-
-const scoreboard = n => {
-  const results = {};
-  for (let i = 1; i <= n; i++) {
-    results[i] = 0;
-  }
-  results[n + 1 + "+"] = 0;
-  return results;
+const sum = list => list.reduce((a, b) => a + b, 0);
+const mapValues = (obj, mapFunc) => {
+  const mapped = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    mapped[k] = mapFunc(k, v);
+  });
+  return mapped;
 };
 
-export {decrement, getInitials, increment, noop, scoreboard};
+export {decrement, getInitials, increment, noop, sum, mapValues};
