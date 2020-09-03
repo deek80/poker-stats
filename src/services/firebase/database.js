@@ -2,7 +2,7 @@ import {useEffect} from "react";
 import {Store} from "pullstate";
 import {database} from "./init";
 import {useAuth} from "./auth";
-import {noop} from "../../util";
+import {noop} from "../../util/misc";
 
 /* Defines a hook `useData(path)` which subscribes to `path` in the
    logged-in user's firebase db. The hook returns a pair
