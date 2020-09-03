@@ -1,63 +1,61 @@
-import {mapValues, sum, numberSort} from "./misc";
+import {numberSort, sum} from "./misc";
 
 class Tournament {
-  constructor({cost, payouts, results = {}}) {
+  constructor({payouts, results = {loss: 0}}) {
     /*
-     * cost:
-     *   the price to enter the tournament.
-     *
-     * payouts: a map of {place: payout} pairs to hold the
-     *   pay structure of the tournament. For example:
-     *     payouts = {1: 4.95, 2: 3.00, 3: 1.00}
-     *   would indicate that first place pays $4.95, second pays $3.00, third
-     *   pays $1.00, and all other places are a loss.
+     * payouts: a map of {place: payout} pairs to hold the *net* payout
+     *   for each position (actual payout - buy-in). i.e.
+     *     payouts = {1: 5.95, 2: 3.00, 3: 1.00, loss: -3.30}
+     *   would indicate that first place pays $9.25 (but you paid 3.30 to play),
+     *   second pays 6.60 minus buy-in, and a loss pays 0 (and again cost 3.30 to play).
      *
      * results: a map of {place: count} pairs to record your
      *   tournament history. For example, a 9-person sit-n-go result map
      *   might look like:
-     *     results = {1: 2, 3:10, 0: 12}
+     *     results = {1: 2, 3:10, loss: 12}
      *   and would indicate a history of:
      *     - 2 first place finishes
      *     - 0 second place finishes (note: missing key means 0)
      *     - 10 third place finishes
-     *     - 12 losses (note: keys must be numeric, but you can just pick 0 or 999 or
-     *                  whatever you want to mean "a loss" if you don't care about the
-     *                  exact finish position)
+     *     - 12 losses
+     *
+     * TODO: i think as is, i'm going with a "write the whole tree every change"
+     * which seems kinda shitty. maybe this tournament should be returned from a hook
+     * and have methods like "recordResult" and whatnot, and just change the data
+     * at the deepest key/value possible.
      */
-    this.cost = cost;
     this.payouts = payouts;
     this.results = results;
   }
 
+  _keys = obj => Object.keys(obj).filter(isFinite).sort(numberSort);
+  _result = place => this.results[place] ?? 0;
+  _payout = place => this.payouts[place] ?? 0;
+
   get data() {
-    return {cost: this.cost, payouts: this.payouts, results: this.results};
+    return {payouts: this.payouts, results: this.results};
   }
 
-  get finishingPlaces() {
-    return Object.keys(this.results).sort(numberSort);
-  }
+  get payoutsByPlace() {
+    const paidPlaces = this._keys(this.payouts).map(place => ({
+      place,
+      count: this._result(place),
+      payout: this._result(place) * this._payout(place),
+    }));
 
-  get gamesPlayed() {
-    return sum(Object.values(this.results));
-  }
+    const loss = {
+      place: "loss",
+      count: this._result("loss"),
+      payout: this._result("loss") * this._payout("loss"),
+    };
 
-  get totalCost() {
-    return this.gamesPlayed * this.cost;
-  }
+    const total = {
+      place: "Totals:",
+      count: sum(paidPlaces.map(p => p.count)) + loss.count,
+      payout: sum(paidPlaces.map(p => p.payout)) + loss.payout,
+    };
 
-  get payoutsMap() {
-    return mapValues(
-      this.results,
-      (place, count) => count * (this.payouts[place] ?? 0)
-    );
-  }
-
-  get totalPayout() {
-    return sum(Object.values(this.payoutsMap));
-  }
-
-  get netPayout() {
-    return this.totalPayout - this.totalCost;
+    return [...paidPlaces, loss, total];
   }
 }
 
