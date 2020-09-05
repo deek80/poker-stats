@@ -2,7 +2,7 @@ import React from "react";
 import {Avatar, IconButton, makeStyles} from "@material-ui/core";
 import {PersonAdd} from "@material-ui/icons";
 import {signInWithGoogle, signOut, useAuth} from "../services/firebase";
-import {getInitials} from "../util";
+import {getInitials} from "../util/misc";
 
 const useStyles = makeStyles(theme => ({
   avatar: {

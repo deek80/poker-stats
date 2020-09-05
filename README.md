@@ -1,5 +1,8 @@
-I like this basic setup for react+mui apps.
+# Poker Stats
+Keep track of your poker tournament results!
 
+
+## Cloned from react-template:
 After cloning this repo, run
 ```
 npx npm-check-updates -u
