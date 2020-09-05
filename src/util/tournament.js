@@ -1,4 +1,4 @@
-import {numberSort, sum} from "./misc";
+import {add} from "./misc";
 
 class Tournament {
   constructor({payouts, results = {loss: 0}}) {
@@ -28,7 +28,18 @@ class Tournament {
     this.results = results;
   }
 
-  _keys = obj => Object.keys(obj).filter(isFinite).sort(numberSort);
+  static _keySort(a, b) {
+    // sort by int value, except for the string "loss" which should come last
+    if (a === "loss") {
+      return 1;
+    }
+    if (b === "loss") {
+      return -1;
+    }
+    return a - b;
+  }
+
+  _keys = obj => Object.keys(obj).sort(this._keySort);
   _result = place => this.results[place] ?? 0;
   _payout = place => this.payouts[place] ?? 0;
 
@@ -37,25 +48,19 @@ class Tournament {
   }
 
   get payoutsByPlace() {
-    const paidPlaces = this._keys(this.payouts).map(place => ({
+    const payoutRows = this._keys(this.payouts).map(place => ({
       place,
       count: this._result(place),
       payout: this._result(place) * this._payout(place),
     }));
 
-    const loss = {
-      place: "loss",
-      count: this._result("loss"),
-      payout: this._result("loss") * this._payout("loss"),
-    };
-
     const total = {
-      place: "Totals:",
-      count: sum(paidPlaces.map(p => p.count)) + loss.count,
-      payout: sum(paidPlaces.map(p => p.payout)) + loss.payout,
+      place: "Total:",
+      count: payoutRows.map(r => r.count).reduce(add, 0),
+      payout: payoutRows.map(r => r.payout).reduce(add, 0),
     };
 
-    return [...paidPlaces, loss, total];
+    return [...payoutRows, total];
   }
 }
 

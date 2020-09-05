@@ -3,18 +3,19 @@ import {useData} from "../services/firebase";
 import {
   CircularProgress,
   Button,
-  TableContainer,
   Table,
   TableHead,
   TableRow,
   TableCell,
   TableBody,
-  Paper,
+  IconButton,
 } from "@material-ui/core";
+import {Add, Remove} from "@material-ui/icons";
 import {Tournament} from "../util/tournament";
+import {dollars, increment, decrement} from "../util/misc";
 
 export default () => {
-  const [data, updateData] = useData("t/sng/45/350");
+  const [data, dataRef] = useData("t/sng/45/350");
   const sng45 = new Tournament(data ?? {});
 
   const reset = () => {
@@ -29,19 +30,17 @@ export default () => {
         7: 1.52,
         loss: -3.5,
       },
-      results: {
-        1: 0,
-        2: 1,
-        3: 1,
-        4: 1,
-        5: 1,
-        6: 1,
-        7: 2,
-        loss: 8,
-      },
     });
 
-    updateData(() => blank.data);
+    dataRef.transaction(() => blank.data);
+  };
+
+  const addResult = place => {
+    dataRef.child(`results/${place}`).transaction(increment);
+  };
+
+  const removeResult = place => {
+    dataRef.child(`results/${place}`).transaction(decrement);
   };
 
   if (data === undefined) {
@@ -51,28 +50,45 @@ export default () => {
   return (
     <>
       <Button onClick={reset}>Reset</Button>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Place</TableCell>
-              <TableCell align="right">Count</TableCell>
-              <TableCell align="right">Payout</TableCell>
+      <Table size="small" style={{width: "auto"}}>
+        <TableHead>
+          <TableRow>
+            <TableCell>Place</TableCell>
+            <TableCell padding="none" />
+            <TableCell align="right">Count</TableCell>
+            <TableCell padding="none" />
+            <TableCell align="right">Payout</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sng45.payoutsByPlace.map(r => (
+            <TableRow key={r.place}>
+              <TableCell component="th" scope="row">
+                {r.place}
+              </TableCell>
+              <TableCell align="right" padding="none">
+                {r.place !== "Total:" && (
+                  <IconButton
+                    size="small"
+                    onClick={() => removeResult(r.place)}
+                  >
+                    <Remove fontsize="inherit" />
+                  </IconButton>
+                )}
+              </TableCell>
+              <TableCell align="right">{r.count}</TableCell>
+              <TableCell align="left" padding="none">
+                {r.place !== "Total:" && (
+                  <IconButton size="small" onClick={() => addResult(r.place)}>
+                    <Add fontsize="inherit" />
+                  </IconButton>
+                )}
+              </TableCell>
+              <TableCell align="right">{dollars(r.payout)}</TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {sng45.payoutsByPlace.map(r => (
-              <TableRow key={r.place}>
-                <TableCell component="th" scope="row">
-                  {r.place}
-                </TableCell>
-                <TableCell align="right">{r.count}</TableCell>
-                <TableCell align="right">{r.payout}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          ))}
+        </TableBody>
+      </Table>
     </>
   );
 };
