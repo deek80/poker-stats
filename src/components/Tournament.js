@@ -12,7 +12,7 @@ import {
 } from "@material-ui/core";
 import {Add, Remove} from "@material-ui/icons";
 import {Tournament} from "../util/tournament";
-import {dollars, increment, decrement} from "../util/misc";
+import {dollars, increment, decrement, add} from "../util/misc";
 
 export default () => {
   const [data, dataRef] = useData("t/sng/45/350");
@@ -20,7 +20,7 @@ export default () => {
 
   const reset = () => {
     const blank = new Tournament({
-      payouts: {
+      rates: {
         1: 41.03,
         2: 27.36,
         3: 20.18,
@@ -36,16 +36,20 @@ export default () => {
   };
 
   const addResult = place => {
-    dataRef.child(`results/${place}`).transaction(increment);
+    dataRef.child(`counts/${place}`).transaction(increment);
   };
 
   const removeResult = place => {
-    dataRef.child(`results/${place}`).transaction(decrement);
+    dataRef.child(`counts/${place}`).transaction(decrement);
   };
 
   if (data === undefined) {
     return <CircularProgress />;
   }
+
+  const summary = sng45.summary;
+  const gamesPlayed = summary.map(r => r.count).reduce(add, 0);
+  const netPay = summary.map(r => r.net).reduce(add, 0);
 
   return (
     <>
@@ -54,39 +58,40 @@ export default () => {
         <TableHead>
           <TableRow>
             <TableCell>Place</TableCell>
+            <TableCell align="right">Rate</TableCell>
             <TableCell padding="none" />
             <TableCell align="right">Count</TableCell>
             <TableCell padding="none" />
-            <TableCell align="right">Payout</TableCell>
+            <TableCell align="right">Net</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {sng45.payoutsByPlace.map(r => (
+          {summary.map(r => (
             <TableRow key={r.place}>
-              <TableCell component="th" scope="row">
-                {r.place}
-              </TableCell>
+              <TableCell>{r.place}</TableCell>
+              <TableCell align="right">{dollars(r.rate)}</TableCell>
               <TableCell align="right" padding="none">
-                {r.place !== "Total:" && (
-                  <IconButton
-                    size="small"
-                    onClick={() => removeResult(r.place)}
-                  >
-                    <Remove fontsize="inherit" />
-                  </IconButton>
-                )}
+                <IconButton size="small" onClick={() => removeResult(r.place)}>
+                  <Remove fontsize="inherit" />
+                </IconButton>
               </TableCell>
               <TableCell align="right">{r.count}</TableCell>
               <TableCell align="left" padding="none">
-                {r.place !== "Total:" && (
-                  <IconButton size="small" onClick={() => addResult(r.place)}>
-                    <Add fontsize="inherit" />
-                  </IconButton>
-                )}
+                <IconButton size="small" onClick={() => addResult(r.place)}>
+                  <Add fontsize="inherit" />
+                </IconButton>
               </TableCell>
-              <TableCell align="right">{dollars(r.payout)}</TableCell>
+              <TableCell align="right">{dollars(r.net)}</TableCell>
             </TableRow>
           ))}
+          <TableRow>
+            <TableCell>Total:</TableCell>
+            <TableCell />
+            <TableCell />
+            <TableCell align="right">{gamesPlayed}</TableCell>
+            <TableCell />
+            <TableCell align="right">{dollars(netPay)}</TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </>
