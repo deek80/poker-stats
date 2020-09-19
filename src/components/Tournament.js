@@ -9,6 +9,8 @@ import {
   TableCell,
   TableBody,
   IconButton,
+  Toolbar,
+  Paper,
 } from "@material-ui/core";
 import {Add, Remove} from "@material-ui/icons";
 import {Tournament} from "../util/tournament";
@@ -52,9 +54,12 @@ export default () => {
   const netPay = summary.map(r => r.net).reduce(add, 0);
 
   return (
-    <>
-      <Button onClick={reset}>Reset</Button>
-      <Table size="small" style={{width: "auto"}}>
+    <Paper>
+      <Toolbar>
+        Stuff
+        <Button onClick={reset}>Reset</Button>
+      </Toolbar>
+      <Table size="small" style={{width: "inherit"}}>
         <TableHead>
           <TableRow>
             <TableCell>Place</TableCell>
@@ -94,6 +99,6 @@ export default () => {
           </TableRow>
         </TableBody>
       </Table>
-    </>
+    </Paper>
   );
 };
