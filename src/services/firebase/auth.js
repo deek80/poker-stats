@@ -1,16 +1,7 @@
-import {useEffect} from "react";
-import {Store} from "pullstate";
+import {useEffect, useState} from "react";
 import {auth} from "./init";
 
-const authStore = new Store({
-  user: null,
-});
-const setLocalUser = user => {
-  authStore.update(s => {
-    s.user = user;
-  });
-};
-
+// TODO: these should go in a util folder
 const signInWithGoogle = () => {
   auth().signInWithPopup(
     new auth.GoogleAuthProvider().setCustomParameters({
@@ -23,17 +14,39 @@ const signOut = () => {
   auth().signOut();
 };
 
-const useAuth = () => {
-  useEffect(
-    () =>
-      auth().onAuthStateChanged(
-        user => setLocalUser(user),
-        _err => setLocalUser(null)
-      ),
-    []
-  );
+/*
+  Defines a hook to fetch and listen for changes to the currently
+  logged in firebase user;
 
-  return authStore.useState(s => s.user);
+  ```jsx
+  const MyComponent = () => {
+    const user = useAuth();
+    const name = user ? user.displayName : "nobody";
+
+    return (
+      <div>
+        Current user: {name}
+      </div>
+    )
+  }
+  ```
+
+  Possible return values
+    user: null    meaning: no one logged in, or no response from firebase yet
+    user: User    meaning: someone logged in!
+ */
+
+const useAuth = () => {
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(
+      user => setUser(user),
+      _err => setUser(null)
+    );
+    return unsubscribe;
+  }, []);
+
+  return user;
 };
 
 export {signInWithGoogle, signOut, useAuth};

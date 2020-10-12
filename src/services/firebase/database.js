@@ -1,68 +1,72 @@
-import {useEffect} from "react";
-import {Store} from "pullstate";
+import {useMemo, useEffect, useState} from "react";
 import {database} from "./init";
 import {useAuth} from "./auth";
 
-/* Defines a hook `useData(path)` which subscribes to `path` in the
-   logged-in user's firebase db. The hook returns a pair
-     [currentValue, doUpdate]
-   When your component is mounted, a listener is set to update
-   `currentValue` whenever a change is detected in firebase, and stopped
-   on ummount. To update the value in firebase, call `doUpdate` with
-   a function that takes the current value and returns the updated value.
+/*
+  Defines a hook to fetch and listen for changes to data in a firebase path,
+  which is automatically prefixed with a unique string for the currently logged in user.
 
-   Before a connection to firebase is established, `currentValue` will
-   be undefined, and `doUpdate` will be a no-op function. Once firebase
-   is connected, the value will be updated to either null (if there's no
-   value set for that path in firebase) or the value from firebase.
+  ```jsx
+  const MyComponent = () => {
+    const [value, ref] = useData("some/relative/path");
 
-   example:
-      const [greeting, greetingRef] = useData("my/greetings/1");
+    if (value === undefined) {
+      return <CircularProgress />;
+    }
 
-      if (greeting === undefined) {
-        return <CircularProgress />;
-      }
+    return (
+      <Button onClick={() => ref.transaction(v => v + 1)}>
+        Current value: {value}
+      </Button>
+    )
+  }
+  ```
 
-      return (
-        <Button onClick={() => greetingRef.transaction(g => g + "!!")}>
-          Click to add !! to your greeting: {greeting}
-        </Button>
-      )
+  Possible return values
+    value: undefined    ref: undefined    meaning: no response from firebase yet
+    value: null         ref: Reference    meaning: no value saved in firebase
+    value: something    ref: Reference    meaning: got the latest from firebase
+
+  Unexpected return values:
+    value: something    ref: undefined    meaning: should not be possible!
+    value: undefined    ref: Reference    meaning: should not be possible!
+
+
+  Other notes:
+    I'm pretty sure the firebase client will efficiently handle multiple listeners
+    to the same path, so you won't download duplicate copies of the data. React
+    will probably keep multiple copies in memory, but surely you won't have _that_
+    much data going in an out of firebase.
  */
-const dataStore = new Store({});
-const setLocalData = (path, value) => {
-  dataStore.update(s => {
-    s[path] = value;
-  });
-};
 
 const useData = path => {
   const user = useAuth();
-  const localData = dataStore.useState(s => s[path]);
-  const remoteDataRef =
-    user && database().ref(`users/${user.uid}/data/${path}`);
+  const ref = useMemo(
+    () => user && database().ref(`users/${user.uid}/data/${path}`),
+    [user, path]
+  );
+  const [data, setData] = useState(undefined);
 
   useEffect(() => {
     if (user === null) {
-      return setLocalData(path, undefined);
+      return setData(undefined);
     }
 
-    remoteDataRef.on(
+    ref.on(
       "value",
-      data => setLocalData(path, data.val()),
-      _err => setLocalData(path, null)
+      data => setData(data.val()),
+      _err => setData(null)
     );
 
     return () => {
-      remoteDataRef.off("value");
+      ref.off("value");
     };
-  }, [path, user, remoteDataRef]);
+  }, [path, ref, user]);
 
   if (user === null) {
     return [undefined, undefined];
   }
-
-  return [localData, remoteDataRef];
+  return [data, ref];
 };
 
 export {useData};

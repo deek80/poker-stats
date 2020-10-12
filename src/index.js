@@ -4,7 +4,6 @@ import {CssBaseline} from "@material-ui/core";
 import {ThemeProvider, createMuiTheme} from "@material-ui/core/styles";
 import {lightBlue, deepPurple} from "@material-ui/core/colors";
 import AppBar from "./components/AppBar";
-import Tournament from "./components/Tournament";
 
 const theme = createMuiTheme({
   palette: {
@@ -22,7 +21,6 @@ ReactDOM.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
     <AppBar />
-    <Tournament />
   </ThemeProvider>,
   document.getElementById("root")
 );

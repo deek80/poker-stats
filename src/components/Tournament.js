@@ -34,6 +34,8 @@ export default () => {
       },
     });
 
+    console.log("RESET!");
+
     dataRef.transaction(() => blank.data);
   };
 
@@ -48,6 +50,7 @@ export default () => {
   if (data === undefined) {
     return <CircularProgress />;
   }
+  console.log("got data:", data);
 
   const summary = sng45.summary;
   const gamesPlayed = summary.map(r => r.count).reduce(add, 0);
