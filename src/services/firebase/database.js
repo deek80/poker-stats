@@ -23,12 +23,12 @@ import {useAuth} from "./auth";
   ```
 
   Possible return values
-    value: undefined    ref: undefined    meaning: no response from firebase yet
+    value: undefined    ref: null         meaning: no response from firebase yet
     value: null         ref: Reference    meaning: no value saved in firebase
     value: something    ref: Reference    meaning: got the latest from firebase
 
   Unexpected return values:
-    value: something    ref: undefined    meaning: should not be possible!
+    value: something    ref: null         meaning: should not be possible!
     value: undefined    ref: Reference    meaning: should not be possible!
 
 
@@ -39,17 +39,22 @@ import {useAuth} from "./auth";
     much data going in an out of firebase.
  */
 
-const useData = path => {
+const useFirebaseRef = path => {
   const user = useAuth();
-  const ref = useMemo(
+  return useMemo(
     () => user && database().ref(`users/${user.uid}/data/${path}`),
     [user, path]
   );
+};
+
+const useData = path => {
+  const ref = useFirebaseRef(path);
   const [data, setData] = useState(undefined);
 
   useEffect(() => {
-    if (user === null) {
-      return setData(undefined);
+    if (ref === null) {
+      setData(undefined); // i.e. user has logged out
+      return;
     }
 
     ref.on(
@@ -61,11 +66,8 @@ const useData = path => {
     return () => {
       ref.off("value");
     };
-  }, [path, ref, user]);
+  }, [ref]);
 
-  if (user === null) {
-    return [undefined, undefined];
-  }
   return [data, ref];
 };
 

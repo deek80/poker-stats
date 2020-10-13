@@ -1,22 +1,9 @@
 import {useEffect, useState} from "react";
 import {auth} from "./init";
 
-// TODO: these should go in a util folder
-const signInWithGoogle = () => {
-  auth().signInWithPopup(
-    new auth.GoogleAuthProvider().setCustomParameters({
-      prompt: "select_account",
-    })
-  );
-};
-
-const signOut = () => {
-  auth().signOut();
-};
-
 /*
-  Defines a hook to fetch and listen for changes to the currently
-  logged in firebase user;
+  Defines a hook to fetch and listen for changes to the currently logged in
+  firebase user:
 
   ```jsx
   const MyComponent = () => {
@@ -49,4 +36,4 @@ const useAuth = () => {
   return user;
 };
 
-export {signInWithGoogle, signOut, useAuth};
+export {useAuth};
